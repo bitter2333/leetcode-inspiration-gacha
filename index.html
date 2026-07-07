@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>力扣灵感扭蛋机</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="hero-panel" aria-labelledby="app-title">
+        <div class="title-stack">
+          <p class="eyebrow">LeetCode Inspiration Gacha</p>
+          <h1 id="app-title">力扣灵感扭蛋机</h1>
+          <p class="subtitle">选择题型与难度，转动旋钮，让今天的刷题灵感从胶囊里蹦出来。</p>
+        </div>
+
+        <div class="layout-grid">
+          <section class="machine-stage" aria-label="互动扭蛋机">
+            <div class="machine" id="machine">
+              <div class="glass-dome">
+                <div class="shine shine-left"></div>
+                <div class="shine shine-right"></div>
+                <div class="capsule capsule-a"><span></span></div>
+                <div class="capsule capsule-b"><span></span></div>
+                <div class="capsule capsule-c"><span></span></div>
+                <div class="capsule capsule-d"><span></span></div>
+                <div class="capsule capsule-e"><span></span></div>
+                <div class="capsule capsule-f"><span></span></div>
+              </div>
+
+              <div class="machine-neck"></div>
+              <div class="machine-body">
+                <div class="coin-slot"></div>
+                <button class="knob" id="draw-button" type="button" aria-label="抽取一道力扣题">
+                  <span class="knob-ridge"></span>
+                  <span class="knob-center">GO</span>
+                </button>
+                <div class="drop-window">
+                  <div class="drop-capsule" id="drop-capsule">
+                    <span class="cap-top"></span>
+                    <span class="cap-bottom"></span>
+                  </div>
+                </div>
+              </div>
+              <div class="machine-base">
+                <span>LUCKY BUG-FIXER</span>
+              </div>
+              <div class="machine-shadow"></div>
+            </div>
+          </section>
+
+          <section class="control-deck" aria-label="抽题设置">
+            <div class="control-block">
+              <div class="section-heading">
+                <span class="step-badge">01</span>
+                <h2>题目类型</h2>
+              </div>
+              <div class="chip-grid" id="category-options" aria-label="选择一个或多个题目类型"></div>
+            </div>
+
+            <div class="control-block">
+              <div class="section-heading">
+                <span class="step-badge">02</span>
+                <h2>难度</h2>
+              </div>
+              <div class="difficulty-row" id="difficulty-options" aria-label="选择题目难度"></div>
+            </div>
+
+            <div class="hint-strip" id="status-text" aria-live="polite">已装填 6 类题库，准备抽题。</div>
+
+            <article class="result-card is-empty" id="result-card" aria-live="polite">
+              <div class="result-meta">
+                <span id="result-category">等待抽取</span>
+                <span id="result-difficulty">Ready</span>
+              </div>
+              <h2 id="result-title">转动旋钮，抽一颗灵感胶囊</h2>
+              <p id="result-hint">你可以多选题型，再指定难度。第一版使用本地内置题库数据。</p>
+              <a class="problem-link is-disabled" id="problem-link" href="#" target="_blank" rel="noreferrer">
+                打开题目
+              </a>
+            </article>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
