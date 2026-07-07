@@ -180,6 +180,8 @@ const problems = [
   },
 ];
 
+let problemBank = Array.isArray(window.LEETCODE_PROBLEMS) ? window.LEETCODE_PROBLEMS : problems;
+
 const state = {
   categories: new Set(categories.map((category) => category.label)),
   difficulty: "中等",
@@ -265,7 +267,7 @@ function updateReadyText() {
 }
 
 function getPool() {
-  return problems.filter(
+  return problemBank.filter(
     (problem) => state.categories.has(problem.category) && problem.difficulty === state.difficulty,
   );
 }
@@ -276,8 +278,7 @@ function pickProblem() {
     return pool[Math.floor(Math.random() * pool.length)];
   }
 
-  const backup = problems.filter((problem) => state.categories.has(problem.category));
-  return backup[Math.floor(Math.random() * backup.length)];
+  return null;
 }
 
 function wait(ms) {
@@ -288,6 +289,11 @@ function wait(ms) {
 
 async function drawProblem() {
   if (state.drawing) return;
+
+  if (getPool().length === 0) {
+    statusText.textContent = "当前题型和难度没有可抽题目，换一个难度或多选几个题型试试。";
+    return;
+  }
 
   state.drawing = true;
   drawButton.disabled = true;
@@ -309,6 +315,12 @@ async function drawProblem() {
 
   await wait(520);
   const problem = pickProblem();
+  if (!problem) {
+    statusText.textContent = "当前组合没有可抽题目，换一个难度或题型试试。";
+    drawButton.disabled = false;
+    state.drawing = false;
+    return;
+  }
   showResult(problem);
 
   await wait(180);
@@ -331,4 +343,7 @@ function showResult(problem) {
 createCategoryOptions();
 createDifficultyOptions();
 updateReadyText();
+if (problemBank.length > problems.length) {
+  statusText.textContent = `已载入 ${problemBank.length} 道本地题库题目，准备抽题。`;
+}
 drawButton.addEventListener("click", drawProblem);

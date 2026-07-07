@@ -8,10 +8,18 @@
 
 - 支持题目类型：算法、数据库、Shell、多线程、JavaScript、pandas
 - 支持难度：简单、中等、困难
-- 使用本地内置题库数据
+- 使用可更新的本地题库数据
 - 结果卡片展示题目名称、分类、难度、简短提示和力扣中文站链接
 - 响应式布局，适配桌面和移动端
 
 ## 使用
 
 直接用浏览器打开 `index.html` 即可。
+
+## 更新题库
+
+运行同步脚本，从力扣中文站拉取题目列表并生成 `data/problems.json` 和 `data/problems.js`：
+
+```powershell
+node scripts/sync-problems.mjs
+```
