@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
@@ -67,9 +67,27 @@
               <div class="difficulty-row" id="difficulty-options" aria-label="选择题目难度"></div>
             </div>
 
-            <div class="hint-strip" id="status-text" aria-live="polite">已装填 6 类题库，准备抽题。</div>
+            <div class="control-block">
+              <div class="section-heading">
+                <span class="step-badge">03</span>
+                <h2>抽取数量</h2>
+              </div>
+              <div class="draw-count-row" id="draw-count-options"></div>
+            </div>
+
+            <div class="hint-strip" id="status-text" aria-live="polite">
+              <span id="status-label">已装填 6 类题库，准备抽题。</span>
+              <button class="mute-btn" id="mute-btn" type="button" aria-label="切换音效" title="音效开关">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                </svg>
+              </button>
+            </div>
 
             <article class="result-card is-empty" id="result-card" aria-live="polite">
+              <div class="result-items" id="result-items"></div>
               <div class="result-meta">
                 <span id="result-category">等待抽取</span>
                 <span id="result-difficulty">Ready</span>
@@ -85,6 +103,7 @@
       </section>
     </main>
 
+    <canvas id="confetti-canvas"></canvas>
     <script src="./data/problems.js"></script>
     <script src="./app.js"></script>
   </body>
