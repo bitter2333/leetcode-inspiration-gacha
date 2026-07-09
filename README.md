@@ -16,6 +16,8 @@
 
 直接用浏览器打开 `index.html` 即可。
 
+或者打开网站<https://leetcode.bitter2333.xyz>使用
+
 ## 更新题库
 
 运行同步脚本，从力扣中文站拉取题目列表并生成 `data/problems.json` 和 `data/problems.js`：
