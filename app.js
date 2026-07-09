@@ -551,7 +551,7 @@ function showResults(problems) {
 // ── Keyboard ──────────────────────────────────────────────
 
 document.addEventListener("keydown", (e) => {
-  if (e.code === "Space" && !state.drawing && e.target === document.body) {
+  if (e.code === "Space" && !state.drawing) {
     e.preventDefault();
     drawProblem();
   }
@@ -573,3 +573,5 @@ if (problemBank.length > problems.length) {
 }
 
 drawButton.addEventListener("click", drawProblem);
+
+
