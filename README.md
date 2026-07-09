@@ -16,7 +16,7 @@
 
 直接用浏览器打开 `index.html` 即可。
 
-或者打开网站<https://leetcode.bitter2333.xyz>使用
+或者直接打开<https://leetcode.bitter2333.xyz>进行使用
 
 ## 更新题库
 
