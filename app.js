@@ -1,4 +1,4 @@
-const categories = [
+﻿const categories = [
   { id: "algorithm", label: "算法", mark: "A" },
   { id: "database", label: "数据库", mark: "D" },
   { id: "shell", label: "Shell", mark: "S" },
@@ -8,6 +8,7 @@ const categories = [
 ];
 
 const difficulties = ["简单", "中等", "困难"];
+const drawCounts = [1, 3, 5, 10];
 
 const problems = [
   {
@@ -36,7 +37,7 @@ const problems = [
     category: "算法",
     difficulty: "中等",
     slug: "longest-substring-without-repeating-characters",
-    hint: "滑动窗口配合字符最后出现位置，窗口左边界只向右移动。",
+    hint: "滑动窗口配合字符最后出现位置，窗口左边只向右移动。",
   },
   {
     title: "三数之和",
@@ -120,7 +121,7 @@ const problems = [
     category: "多线程",
     difficulty: "简单",
     slug: "print-in-order",
-    hint: "用锁、信号量或条件变量建立 first、second、third 的先后关系。",
+    hint: "用锁、信号量或条件变量建立 first、second、third 的先後关系。",
   },
   {
     title: "交替打印 FooBar",
@@ -148,7 +149,7 @@ const problems = [
     category: "JavaScript",
     difficulty: "中等",
     slug: "debounce",
-    hint: "每次调用都清掉旧定时器，只让最后一次延迟执行。",
+    hint: "每次调用都清掉旧定时器，只让最后一次延时执行。",
   },
   {
     title: "带取消功能的延迟函数",
@@ -169,7 +170,7 @@ const problems = [
     category: "pandas",
     difficulty: "中等",
     slug: "modify-columns",
-    hint: "列级运算可直接赋值回原列，避免逐行循环。",
+    hint: "列级运算可以直接赋值回原列，避免逐行循环。",
   },
   {
     title: "重塑数据：融合",
@@ -183,15 +184,18 @@ const problems = [
 let problemBank = Array.isArray(window.LEETCODE_PROBLEMS) ? window.LEETCODE_PROBLEMS : problems;
 
 const state = {
-  categories: new Set(categories.map((category) => category.label)),
+  categories: new Set(categories.map((c) => c.label)),
   difficulty: "中等",
+  drawCount: 1,
   drawing: false,
 };
 
 const machine = document.querySelector("#machine");
 const drawButton = document.querySelector("#draw-button");
 const statusText = document.querySelector("#status-text");
+const statusLabel = document.querySelector("#status-label");
 const resultCard = document.querySelector("#result-card");
+const resultItems = document.querySelector("#result-items");
 const resultCategory = document.querySelector("#result-category");
 const resultDifficulty = document.querySelector("#result-difficulty");
 const resultTitle = document.querySelector("#result-title");
@@ -199,129 +203,322 @@ const resultHint = document.querySelector("#result-hint");
 const problemLink = document.querySelector("#problem-link");
 const categoryOptions = document.querySelector("#category-options");
 const difficultyOptions = document.querySelector("#difficulty-options");
+const drawCountOptions = document.querySelector("#draw-count-options");
+const muteBtn = document.querySelector("#mute-btn");
+
+// ── Sound Manager ──────────────────────────────────────────
+
+class SoundManager {
+  constructor() {
+    this.ctx = null;
+    this.muted = false;
+  }
+
+  _ensure() {
+    if (!this.ctx) {
+      const Ctor = window.AudioContext || window.webkitAudioContext;
+      if (!Ctor) return;
+      this.ctx = new Ctor();
+    }
+    if (this.muted) return null;
+    return this.ctx;
+  }
+
+  _tone(freq, dur, vol = 0.12, type = "sine", startDelay = 0) {
+    const ctx = this._ensure();
+    if (!ctx) return;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = type;
+    osc.frequency.value = freq;
+    const t = ctx.currentTime + startDelay;
+    gain.gain.setValueAtTime(vol, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    osc.start(t);
+    osc.stop(t + dur);
+  }
+
+  click() { this._tone(800, 0.08, 0.12); }
+  spin() {
+    [523, 659, 784, 1047].forEach((f, i) => this._tone(f, 0.1, 0.1, "sine", i * 0.07));
+  }
+  rattle() {
+    for (let i = 0; i < 6; i++) {
+      this._tone(1200 + Math.random() * 600, 0.05, 0.05, "sine", i * 0.06);
+    }
+  }
+  drop() {
+    const ctx = this._ensure();
+    if (!ctx) return;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(400, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(150, ctx.currentTime + 0.3);
+    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.35);
+  }
+  open() {
+    this._tone(1200, 0.25, 0.18);
+    this._tone(2400, 0.15, 0.06, "sine", 0);
+  }
+  result() {
+    [523, 659, 784, 1047, 784, 1047].forEach((f, i) => this._tone(f, 0.15, 0.1, "sine", i * 0.1));
+  }
+
+  toggleMute() {
+    this.muted = !this.muted;
+    muteBtn.classList.toggle("is-muted", this.muted);
+    const svg = muteBtn.querySelector("svg");
+    if (this.muted) {
+      svg.innerHTML =
+        '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line>';
+    } else {
+      svg.innerHTML =
+        '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>';
+    }
+    return this.muted;
+  }
+}
+
+const sound = new SoundManager();
+
+// ── Confetti System ────────────────────────────────────────
+
+class ConfettiSystem {
+  constructor(canvas) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext("2d");
+    this.particles = [];
+    this.rafId = null;
+    this.resize();
+    window.addEventListener("resize", () => this.resize());
+  }
+
+  resize() {
+    this.canvas.width = window.innerWidth;
+    this.canvas.height = window.innerHeight;
+  }
+
+  burst(count = 80) {
+    const colors = ["#f16f5f", "#f6b842", "#45c4a1", "#5577d8", "#fff8d6", "#ff9f7c"];
+    for (let i = 0; i < count; i++) {
+      this.particles.push({
+        x: this.canvas.width / 2 + (Math.random() - 0.5) * 200,
+        y: this.canvas.height * 0.3,
+        vx: (Math.random() - 0.5) * 12,
+        vy: -Math.random() * 12 - 2,
+        size: 4 + Math.random() * 8,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        rot: Math.random() * Math.PI * 2,
+        rotSpd: (Math.random() - 0.5) * 0.2,
+        opacity: 1,
+        shape: Math.random() > 0.5 ? "circle" : "rect",
+        grav: 0.25 + Math.random() * 0.15,
+      });
+    }
+    if (!this.rafId) this._animate();
+  }
+
+  _animate() {
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    let alive = false;
+    for (const p of this.particles) {
+      p.vx *= 0.99;
+      p.vy += p.grav;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.rot += p.rotSpd;
+      p.opacity -= 0.003;
+      if (p.opacity <= 0) continue;
+      alive = true;
+      this.ctx.save();
+      this.ctx.translate(p.x, p.y);
+      this.ctx.rotate(p.rot);
+      this.ctx.globalAlpha = Math.max(0, p.opacity);
+      this.ctx.fillStyle = p.color;
+      if (p.shape === "circle") {
+        this.ctx.beginPath();
+        this.ctx.arc(0, 0, p.size / 2, 0, Math.PI * 2);
+        this.ctx.fill();
+      } else {
+        this.ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
+      }
+      this.ctx.restore();
+    }
+    if (alive) {
+      this.rafId = requestAnimationFrame(() => this._animate());
+    } else {
+      this.particles = [];
+      this.rafId = null;
+      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    }
+  }
+}
+
+const confetti = new ConfettiSystem(document.querySelector("#confetti-canvas"));
+
+// ── UI Builders ────────────────────────────────────────────
 
 function createCategoryOptions() {
-  categories.forEach((category) => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "chip is-active";
-    button.dataset.category = category.label;
-    button.setAttribute("aria-pressed", "true");
-    button.innerHTML = `
-      <span class="chip-mark">${category.mark}</span>
-      <span class="chip-name">${category.label}</span>
+  categories.forEach((cat) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "chip is-active";
+    btn.dataset.category = cat.label;
+    btn.setAttribute("aria-pressed", "true");
+    btn.innerHTML = `
+      <span class="chip-mark">${cat.mark}</span>
+      <span class="chip-name">${cat.label}</span>
     `;
-    button.addEventListener("click", () => toggleCategory(button, category.label));
-    categoryOptions.append(button);
+    btn.addEventListener("click", () => toggleCategory(btn, cat.label));
+    categoryOptions.append(btn);
   });
 }
 
 function createDifficultyOptions() {
-  difficulties.forEach((difficulty) => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = `difficulty${difficulty === state.difficulty ? " is-active" : ""}`;
-    button.dataset.difficulty = difficulty;
-    button.setAttribute("aria-pressed", String(difficulty === state.difficulty));
-    button.textContent = difficulty;
-    button.addEventListener("click", () => setDifficulty(difficulty));
-    difficultyOptions.append(button);
+  difficulties.forEach((d) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = `difficulty${d === state.difficulty ? " is-active" : ""}`;
+    btn.dataset.difficulty = d;
+    btn.setAttribute("aria-pressed", String(d === state.difficulty));
+    btn.textContent = d;
+    btn.addEventListener("click", () => { setDifficulty(d); sound.click(); });
+    difficultyOptions.append(btn);
   });
 }
 
-function toggleCategory(button, category) {
-  if (state.drawing) return;
+function createDrawCountOptions() {
+  drawCounts.forEach((n) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = `draw-count-btn${n === state.drawCount ? " is-active" : ""}`;
+    btn.dataset.count = n;
+    btn.textContent = n;
+    btn.addEventListener("click", () => { setDrawCount(btn, n); sound.click(); });
+    drawCountOptions.append(btn);
+  });
+}
 
-  if (state.categories.has(category) && state.categories.size === 1) {
-    statusText.textContent = "至少保留一个题目类型，扭蛋机才不会空转。";
+// ── State Mutators ────────────────────────────────────────
+
+function toggleCategory(btn, cat) {
+  if (state.drawing) return;
+  if (state.categories.has(cat) && state.categories.size === 1) {
+    statusLabel.textContent = "至少保留一个题目类型，扭蛋机才不会空转。";
     return;
   }
-
-  if (state.categories.has(category)) {
-    state.categories.delete(category);
-  } else {
-    state.categories.add(category);
-  }
-
-  button.classList.toggle("is-active", state.categories.has(category));
-  button.setAttribute("aria-pressed", String(state.categories.has(category)));
+  if (state.categories.has(cat)) state.categories.delete(cat);
+  else state.categories.add(cat);
+  btn.classList.toggle("is-active", state.categories.has(cat));
+  btn.setAttribute("aria-pressed", String(state.categories.has(cat)));
   updateReadyText();
 }
 
-function setDifficulty(difficulty) {
+function setDifficulty(d) {
   if (state.drawing) return;
+  state.difficulty = d;
+  document.querySelectorAll(".difficulty").forEach((btn) => {
+    const on = btn.dataset.difficulty === d;
+    btn.classList.toggle("is-active", on);
+    btn.setAttribute("aria-pressed", String(on));
+  });
+  updateReadyText();
+}
 
-  state.difficulty = difficulty;
-  document.querySelectorAll(".difficulty").forEach((button) => {
-    const isActive = button.dataset.difficulty === difficulty;
-    button.classList.toggle("is-active", isActive);
-    button.setAttribute("aria-pressed", String(isActive));
+function setDrawCount(btn, n) {
+  if (state.drawing) return;
+  state.drawCount = n;
+  document.querySelectorAll(".draw-count-btn").forEach((b) => {
+    b.classList.toggle("is-active", Number(b.dataset.count) === n);
   });
   updateReadyText();
 }
 
 function updateReadyText() {
-  const categoryText = [...state.categories].join("、");
-  const poolSize = getPool().length;
-  statusText.textContent = `已选择 ${categoryText}，${state.difficulty}难度，可抽取 ${poolSize} 道题。`;
+  const cats = [...state.categories].join("、");
+  const pool = getPool().length;
+  const n = state.drawCount;
+  statusLabel.textContent =
+    pool > 0
+      ? `已选择 ${cats}，${state.difficulty}难度，可抽取 ${pool} 道题（连抽 ${n} 道）`
+      : `当前筛选无匹配题目，换个难度或题型试试。`;
 }
 
 function getPool() {
   return problemBank.filter(
-    (problem) => state.categories.has(problem.category) && problem.difficulty === state.difficulty,
+    (p) => state.categories.has(p.category) && p.difficulty === state.difficulty,
   );
 }
 
-function pickProblem() {
+function pickProblems(count) {
   const pool = getPool();
-  if (pool.length > 0) {
-    return pool[Math.floor(Math.random() * pool.length)];
+  const n = Math.min(count, pool.length);
+  const shuffled = [...pool];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
-
-  return null;
+  return shuffled.slice(0, n);
 }
 
 function wait(ms) {
-  return new Promise((resolve) => {
-    window.setTimeout(resolve, ms);
-  });
+  return new Promise((r) => window.setTimeout(r, ms));
 }
+
+// ── Main Draw ─────────────────────────────────────────────
 
 async function drawProblem() {
   if (state.drawing) return;
 
-  if (getPool().length === 0) {
-    statusText.textContent = "当前题型和难度没有可抽题目，换一个难度或多选几个题型试试。";
+  const pool = getPool();
+  if (pool.length === 0) {
+    statusLabel.textContent = "当前题型和难度没有可抽题目，换一个难度或多选题型试试。";
     return;
   }
 
   state.drawing = true;
   drawButton.disabled = true;
   resultCard.classList.add("is-empty");
-  problemLink.classList.add("is-disabled");
-  statusText.textContent = "球仓正在晃动，灵感胶囊加速中...";
+  resultItems.innerHTML = "";
+  statusLabel.textContent = "球仓正在晃动，灵感胶囊加速中...";
 
   machine.classList.remove("is-opening", "is-dropping", "is-drawing", "is-shaking");
   void machine.offsetWidth;
   machine.classList.add("is-shaking", "is-drawing");
+  sound.spin();
+  sound.rattle();
 
   await wait(1150);
-  statusText.textContent = "旋钮锁定，胶囊准备落下。";
+  statusLabel.textContent = "旋钮锁定，胶囊准备落下...";
   machine.classList.add("is-dropping");
+  sound.drop();
 
   await wait(1050);
-  statusText.textContent = "胶囊打开，题目出炉。";
+  statusLabel.textContent = "胶囊打开，题目出炉！";
   machine.classList.add("is-opening");
+  sound.open();
 
   await wait(520);
-  const problem = pickProblem();
-  if (!problem) {
-    statusText.textContent = "当前组合没有可抽题目，换一个难度或题型试试。";
+
+  const picked = pickProblems(state.drawCount);
+  if (picked.length === 0) {
+    statusLabel.textContent = "当前组合没有可抽题目，换个难度或题型试试。";
     drawButton.disabled = false;
     state.drawing = false;
     return;
   }
-  showResult(problem);
+
+  showResults(picked);
+  sound.result();
+  confetti.burst(40 + picked.length * 30);
 
   await wait(180);
   machine.classList.remove("is-shaking", "is-drawing", "is-dropping", "is-opening");
@@ -329,21 +526,54 @@ async function drawProblem() {
   state.drawing = false;
 }
 
-function showResult(problem) {
+function showResults(problems) {
   resultCard.classList.remove("is-empty");
-  resultCategory.textContent = problem.category;
-  resultDifficulty.textContent = problem.difficulty;
-  resultTitle.textContent = problem.title;
-  resultHint.textContent = problem.hint;
-  problemLink.href = `https://leetcode.cn/problems/${problem.slug}/`;
-  problemLink.classList.remove("is-disabled");
-  statusText.textContent = `抽中了「${problem.title}」。再转一次，换一颗胶囊。`;
+
+  problems.forEach((p, i) => {
+    const item = document.createElement("div");
+    item.className = "result-item";
+    item.style.animationDelay = `${i * 0.08}s`;
+    item.innerHTML = `
+      <div class="result-meta">
+        <span>${p.category}</span>
+        <span>${p.difficulty}</span>
+      </div>
+      <div class="result-title-row">
+      <h3>${p.title}</h3>
+      <a class="problem-link" href="https://leetcode.cn/problems/${p.slug}/" target="_blank" rel="noreferrer">打开题目</a>
+      </div>
+      <p>${p.hint}</p>
+    `;
+    resultItems.append(item);
+  });
+
+  statusLabel.textContent = `抽中了 ${problems.length} 道题！再转一次，换一批胶囊。`;
 }
+
+// ── Keyboard ──────────────────────────────────────────────
+
+document.addEventListener("keydown", (e) => {
+  if (e.code === "Space" && !state.drawing) {
+    e.preventDefault();
+    drawProblem();
+  }
+});
+
+// ── Mute Button ───────────────────────────────────────────
+
+muteBtn.addEventListener("click", () => sound.toggleMute());
+
+// ── Init ──────────────────────────────────────────────────
 
 createCategoryOptions();
 createDifficultyOptions();
+createDrawCountOptions();
 updateReadyText();
+
 if (problemBank.length > problems.length) {
-  statusText.textContent = `已载入 ${problemBank.length} 道本地题库题目，准备抽题。`;
+  statusLabel.textContent = `已加载 ${problemBank.length} 道本地题库题目，准备抽题。`;
 }
+
 drawButton.addEventListener("click", drawProblem);
+
+
