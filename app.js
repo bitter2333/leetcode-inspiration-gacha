@@ -538,9 +538,11 @@ function showResults(problems) {
         <span>${p.category}</span>
         <span>${p.difficulty}</span>
       </div>
+      <div class="result-title-row">
       <h3>${p.title}</h3>
-      <p>${p.hint}</p>
       <a class="problem-link" href="https://leetcode.cn/problems/${p.slug}/" target="_blank" rel="noreferrer">打开题目</a>
+      </div>
+      <p>${p.hint}</p>
     `;
     resultItems.append(item);
   });

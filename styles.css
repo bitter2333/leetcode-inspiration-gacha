@@ -408,7 +408,22 @@ h1 {
 .result-item .result-meta { margin-bottom: 0.35rem; }
 .result-item h3 { margin: 0 0 0.25rem; font-size: clamp(0.9rem,2vw,1.05rem); line-height: 1.25; }
 .result-item p { margin: 0 0 0.35rem; color: #58657a; font-size: 0.82rem; line-height: 1.5; }
-.result-item .problem-link { min-height: 30px; padding: 0 0.6rem; font-size: 0.8rem; }
+.result-item .problem-link { min-height: 30px; padding: 0 0.6rem; font-size: 0.8rem; align-self: center; }
+.result-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+.result-title-row h3 {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+}
+.result-title-row .problem-link {
+  flex: 0 0 auto;
+  margin-top: 0;
+}
 #confetti-canvas {
   position: fixed;
   top: 0; left: 0;
@@ -455,6 +470,7 @@ h1 {
   .step-badge { width: 26px; height: 20px; font-size: 0.65rem; }
   .chip-grid, .difficulty-row, .draw-count-row { gap: 0.45rem; }
 }
+
 
 
 
