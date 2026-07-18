@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from "node:fs/promises";
+﻿import { mkdir, writeFile } from "node:fs/promises";
 
 const categories = [
   { apiSlug: "algorithms", label: "算法" },
@@ -34,7 +34,7 @@ async function fetchCategory(category) {
   const payload = await response.json();
 
   return payload.stat_status_pairs
-    .filter((item) => !item.stat.question__hide)
+    .filter((item) => !item.stat.question__hide && !item.paid_only)
     .map((item) => ({
       id: item.stat.frontend_question_id,
       title: item.stat.question__title,
@@ -59,7 +59,7 @@ for (const category of categories) {
   }
 }
 
-const results = [...bySlug.values()].sort((a, b) => {
+const results = [...bySlug.values()].filter((p) => !p.paidOnly).sort((a, b) => {
   const categoryOrder =
     categories.findIndex((category) => category.label === a.category) -
     categories.findIndex((category) => category.label === b.category);
@@ -77,3 +77,5 @@ await writeFile(
 );
 
 console.log(`Wrote ${results.length} problems to data/problems.json and data/problems.js`);
+
+

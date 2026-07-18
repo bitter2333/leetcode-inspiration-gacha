@@ -181,7 +181,7 @@ const problems = [
   },
 ];
 
-let problemBank = Array.isArray(window.LEETCODE_PROBLEMS) ? window.LEETCODE_PROBLEMS : problems;
+let problemBank = Array.isArray(window.LEETCODE_PROBLEMS) ? window.LEETCODE_PROBLEMS.filter((p) => !p.paidOnly) : problems;
 
 const state = {
   categories: new Set(categories.map((c) => c.label)),
@@ -575,5 +575,6 @@ if (problemBank.length > problems.length) {
 }
 
 drawButton.addEventListener("click", drawProblem);
+
 
 
